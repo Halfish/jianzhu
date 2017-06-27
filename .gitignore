@@ -1,0 +1,33 @@
+# ignore all compiled python files
+*.pyc
+
+# ignore big dumped models
+*.npy
+*.model
+*.pt
+*.mat
+
+# some json
+*.json
+
+# big txt
+*_corpus.txt
+
+# ipython
+.ipynb_checkpoints
+flickr8k_review.ipynb
+Untitled.ipynb
+
+# dataset
+arch
+
+# cache
+*.json.cache
+jieba.cache
+
+# txt
+*.txt
+
+Flicker8k_Dataset
+flickr30k-images
+static/dataset/public/flickr8k/img

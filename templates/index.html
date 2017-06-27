@@ -1,0 +1,25 @@
+<html>
+	<head>
+        <title>{{ title }}</title>
+        <link rel="stylesheet" type="text/css" href="static/css/style.css"></link>
+	</head>
+	<body>
+        <div name='content' style='text-align:center; margin-top:200px'>
+            <div name='text' style='float:left; height:200px; width:500px;'>
+                <p>文本搜索</p>
+                <form action='/', method='post'>
+                    <input type='text' name='query_text' placeholder=" 建筑风格描述"></input>
+                    <input type='submit'></input>
+                </form>
+            </div>
+            <hr width='1' size='500' style='float:left; margin:30px; color:black;' />
+            <div name='image' style='float:left; height:200px; width:400px;'>
+                <p>图片搜索</p>
+                <form action='/', enctype='multipart/form-data', method='post'>
+                    <input type='file' name='query_image'></input>
+                    <input type='submit'></input>
+                </form>
+            </div>
+        </div>
+       	</body>
+</html>

@@ -1,0 +1,29 @@
+<html>
+    <head><title>result</title></head>
+    <body style='width:1000px; margin:20px auto'>
+        <div style='text-align:center; margin:50px'>
+            <h1>图文互搜</h1>
+        </div>
+        {% for i in range(len(data_pair)) %}
+        <div name='content' style='text-align:center; height:600px; border: 1px black solid; overflow:auto; margin: 30px;'>
+            <div name='text' style='float:left; height:350px; width:400px; margin:10px; '>
+                <div>
+                <table style='word-break:break-all; border-collapse:separate; border-spacing:10px'>
+                    {% for key, value in data_pair[i].iteritems() %}
+                    <tr>
+                        <td style='min-width:80px'>{{escape(key)}}</td>
+                        <td style='min-width:80px'>{{escape(value)}}</td>
+                    </tr>
+                    {% end %}
+                </table>
+                </div>
+            </div>
+            <div name='image' style='float:right; height:350px; width:400px; margin:10px'>
+                {% for imgurl, imgid in images[i] %}
+                <img src={{escape(imgurl)}} alt={{escape(imgid)}}/>
+                {% end %}
+            </div>
+        </div>
+        {% end %}
+    </body>
+</html>

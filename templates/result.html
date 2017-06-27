@@ -1,0 +1,12 @@
+<html>
+    <head><title>result</title></head>
+    <body>
+        {% for sentence in sentences %}
+        <p>{{escape(sentence)}}</p>
+        {% end %}
+        <hr />
+        {% for imgurl in imgurls %}
+        <img src={{escape(imgurl)}}  />
+        {% end %}
+    </body>
+</html>

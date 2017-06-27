@@ -1,0 +1,24 @@
+body {
+    width: 1000px;
+    margin: 20px auto;
+}
+
+form>input[type="submit"] {
+    border-radius: 15px;
+    height: 40px;
+    font-size: 18px;
+}
+
+form>input[type="text"] {
+    border-radius: 15px;
+    width: 400px;
+    height: 40px;
+    outline: none;
+    font-size: 20px;
+    margin: 5px;
+    padding: 10px;
+    background-image: ../img/search-button.png;
+    background-repeat: no-repeat;
+    background-size: 21px 21px;
+    background-position: 85%;
+}
