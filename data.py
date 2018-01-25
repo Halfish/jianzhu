@@ -19,46 +19,28 @@ class ArchDataset(torch.utils.data.Dataset):
         self.gvar = global_variable
         self.max_len = max_len
 
+        assert config.which_text in {'title', 'detail'}
+
         with open(os.path.join(self.config.root_dir, self.config.filename), 'r') as f:
-            data_pair = map(json.loads, f.readlines())
+            # data_pair is list of dict
+            data_pair = [json.loads(line.strip()) for line in f] 
             cut_point = int(len(data_pair) * self.config.split_rate)
-            if self.config.train:
-                self.train_sentences = np.array(
-                    [data[self.config.which_text] for data in data_pair[:cut_point]])
-                self.train_images = np.array(
-                    [data['images'] for data in data_pair[:cut_point]])
-                index = range(len(self.train_sentences))
-                random.shuffle(index)
-                self.train_sentences = self.train_sentences[index]
-                self.train_images = self.train_images[index]
-            else:
-                self.val_sentences = np.array(
-                    [data[self.config.which_text] for data in data_pair[cut_point:]])
-                self.val_images = np.array(
-                    [data['images'] for data in data_pair[cut_point:]])
-                index = range(len(self.val_sentences))
-                random.shuffle(index)
-                self.val_sentences = self.val_sentences[index]
-                self.val_images = self.val_images[index]
+            self.data_pair = data_pair[:cut_point] \
+                        if self.config.train else data_pair[cut_point:]
+            random.shuffle(self.data_pair)
 
     def __len__(self):
-        if self.config.train:
-            return min(self.max_len, len(self.train_sentences))
-        else:
-            return min(self.max_len, len(self.val_sentences))
+        return min(self.max_len, len(self.data_pair))
 
     def __getitem__(self, index):
-        if self.config.train:
-            sentence, imgs = self.train_sentences[index], self.train_images[index]
-        else:
-            sentence, imgs = self.val_sentences[index], self.val_images[index]
-        img_id = random.choice(imgs)['image_id']  # randomly choice one picture
-        img = self.gvar.arch_feats[img_id]
+        # get sentence
+        sentence = self.data_pair[index][self.config.which_text]
         sentence = self.gvar.sentence_transform(sentence)
         if sentence.shape[0] == 0: # fix crash bug, in case no words left after jieba
             sentence = np.random.randn(1, self.gvar.wvModel.vector_size)
-
-        return img, sentence
+        # load image tensor from gvar
+        image = self.gvar.arch_feats[index]
+        return image, sentence
 
     def __iter__(self):
         while True:
@@ -77,16 +59,19 @@ class ArchDataset(torch.utils.data.Dataset):
         bag_sentences, bag_images, bag_lengths = [], [], []
         for i in range(self.config.neg_sample_num):
             images = np.array([data[i][0] for data in batch_data])
-            sentences = [data[i][1] for data in batch_data]  # list of numpy arrays with variable lengths
+            # list of numpy arrays with variable lengths
+            sentences = [data[i][1] for data in batch_data]  
             lengths = np.array([sentence.shape[0] for sentence in sentences])
 
             # padding words embeddings
             actual_batch_size, max_seq_len = len(lengths), max(lengths)
             if self.config.model_type == 'cnn':
-                max_seq_len = max(lengths[0], 9) # at least 9 words, considering convolution operation
-            padded_sentences = np.zeros((actual_batch_size, max_seq_len, self.config.word_emb_dim))
-            for i in range(actual_batch_size):
-                padded_sentences[i, 0:lengths[i], :] = sentences[i]
+                # at least 9 words, considering convolution operation
+                max_seq_len = max(lengths[0], 9) 
+            padded_sentences = np.zeros(
+                    (actual_batch_size, max_seq_len, self.config.word_emb_dim))
+            for j in range(actual_batch_size):
+                padded_sentences[i, 0:lengths[j], :] = sentences[j]
 
             padded_sentences = Variable(torch.from_numpy(padded_sentences)).float()
             images = Variable(torch.from_numpy(images)).float()
@@ -111,21 +96,14 @@ class RawArchDataset(torch.utils.data.Dataset):
         self.max_len = max_len
         self.gvar = global_variable
         self.config = config
-        assert self.config.mode in {'image', 'title', 'detail', 'keywords'}, 'wrong mode!'
+        assert self.config.mode in {'image', 'title', 'detail'}, 'wrong mode!'
 
         with open(os.path.join(self.config.root_dir, self.config.filename), 'r') as f:
             data_pair = map(json.loads, f.readlines())
             if self.config.mode == 'image':
-                self.images = []
-                for data in data_pair:
-                    sentence_id = data['sentence_id']
-                    for image in data['images']:
-                        image_id = image['image_id']
-                        image_path = os.path.join(data['poster'], image['image_name'])
-                        self.images.append((sentence_id, image_id, image_path))
+                self.images = [data['imgpath'] for data in data_pair]
             else:
-                self.sentences = [(data['sentence_id'], data[self.config.mode])
-                                  for data in data_pair]
+                self.sentences = [data[self.config.mode] for data in data_pair]
 
     def __len__(self):
         if self.config.mode == 'image':
@@ -135,18 +113,18 @@ class RawArchDataset(torch.utils.data.Dataset):
 
     def __getitem__(self, index):
         if self.config.mode == 'image':
-            sentence_id, image_id, image_name = self.images[index]
+            image_name = self.images[index]
             image_path = os.path.join(self.config.root_dir, image_name)
             image = Image.open(image_path).convert('RGB')
             image = self.gvar.img_transform(image)
-            return sentence_id, image_id, image
+            return image
         else:
-            sentence_id, sentence = self.sentences[index]
+            sentence = self.sentences[index]
             sentence = self.gvar.sentence_transform(sentence)
             # fix crash bug, in case no words left after jieba
             if sentence.shape[0] == 0:
                 sentence = np.random.randn(1, self.gvar.wvModel.vector_size)
-            return sentence_id, sentence
+            return sentence
 
     def __iter__(self):
         index = 0
@@ -166,17 +144,12 @@ class RawArchDataset(torch.utils.data.Dataset):
 
     def split_batch(self, batch_data):
         if self.config.mode == 'image':
-            sentence_ids = np.array([sentence_id for sentence_id, _, _ in batch_data])
-            img_ids = np.array([img_id for _, img_id, _ in batch_data])
-            images = np.array([image.numpy() for _, _, image in batch_data])
-            images = Variable(torch.from_numpy(images))
+            images = Variable(torch.stack(batch_data))
             if self.config.cuda:
                 images = images.cuda()
-            return sentence_ids, img_ids, images
+            return images
         else:
-            # sort as descending order according to lengths of sentences
-            sentence_ids = np.array([sentence_id for sentence_id, _ in batch_data])
-            sentences = [sentence for _, sentence in batch_data]
+            sentences = batch_data
             lengths = np.array([sentence.shape[0] for sentence in sentences])
 
             # padding words embeddings
@@ -189,17 +162,18 @@ class RawArchDataset(torch.utils.data.Dataset):
             padded_sentences = Variable(padded_sentences)
             if self.config.cuda:
                 padded_sentences = padded_sentences.cuda()
-            return sentence_ids, padded_sentences, lengths
+            return padded_sentences, lengths
 
 
 if __name__ == '__main__':
     import configure
     gvar = configure.GlobalVariable()
-    dataset = ArchDataset(Config(source='parameters.json'), gvar)
-    for sentences, images, flags in dataset.next_batch():
-        print sentences.data
-        print images.data
-        print flags.data
+    dataset = ArchDataset(Config(source='parameters.json', train=True), gvar)
+    for bag_sentences, bag_images, bag_lengths in dataset.next_batch():
+        print(len(bag_sentences), len(bag_images), len(bag_lengths))
+        print(bag_sentences[0].data)
+        print(bag_images[0].data)
+        print(bag_lengths[0])
         break
 
     '''

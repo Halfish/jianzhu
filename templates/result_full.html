@@ -9,7 +9,7 @@
             <div name='text' style='float:left; height:350px; width:400px; margin:10px; '>
                 <div>
                 <table style='word-break:break-all; border-collapse:separate; border-spacing:10px'>
-                    {% for key, value in data_pair[i].iteritems() %}
+                    {% for key, value in data_pair[i].items() %}
                     <tr>
                         <td style='min-width:80px'>{{escape(key)}}</td>
                         <td style='min-width:80px'>{{escape(value)}}</td>
@@ -19,9 +19,7 @@
                 </div>
             </div>
             <div name='image' style='float:right; height:350px; width:400px; margin:10px'>
-                {% for imgurl, imgid in images[i] %}
-                <img src={{escape(imgurl)}} alt={{escape(imgid)}}/>
-                {% end %}
+                <img src={{escape(images[i])}} />
             </div>
         </div>
         {% end %}

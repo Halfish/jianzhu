@@ -39,7 +39,7 @@ class GlobalVariable(object):
         self.wvModel = Word2Vec.load('static/word2vec-chi/word2vec_news.model')
 
         self.img_transform = transforms.Compose([
-            transforms.Scale(224),
+            transforms.Resize(224),
             transforms.CenterCrop(224),
             transforms.ToTensor(),
             transforms.Normalize(mean=[0.485, 0.456, 0.406],
@@ -56,8 +56,7 @@ class GlobalVariable(object):
         try:
             with h5py.File('arch_feats.h5', 'r') as hf:
                 self.arch_feats = hf['feats'][:]
-                self.sentence_ids = hf['sentence_ids'][:]
+                # self.sentence_ids = hf['sentence_ids'][:]
         except:
-            print 'failed to open arch_feats.h5'
-
-
+            print('failed to open arch_feats.h5')
+        print('done loaded global variables')

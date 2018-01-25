@@ -103,15 +103,13 @@ class MultimodalModule(nn.Module):
         for bagid in range(len(bag_sentences)):
             if self.model_type == 'rnn':
                 output, (hidden_state, cell_state)= self.rnn(bag_sentences[bagid])
-                output = torch.cat([output[i, 0:bag_lengths[bagid][i], :].mean(0)
+                sentences_emb = torch.stack([output[i, 0:bag_lengths[bagid][i], :].mean(0)
                                     for i in range(len(output))])
-                bag_semantic.append(output)
-            '''
             elif self.model_type == 'cnn':
                 sentences_emb = self.cnn(words_emb)
             elif self.model_type == 'simple':
                 sentences_emb = words_emb.mean(1).squeeze(1)
-            '''
+            bag_semantic.append(sentences_emb)
 
             # embedding image feature to multi-modal vector space
             images_emb = self.mlp(bag_images[bagid])
@@ -174,16 +172,16 @@ class CNNTextModule(nn.Module):
 
 if __name__ == '__main__':
     config = Config('parameters.json', model_type='rnn', which_text='title')
-    print config
+    print(config)
     multimodal = MultimodalModule(config)
-    print multimodal
+    print(multimodal)
     words_emb = torch.autograd.Variable(torch.randn(10, 56, 300))
     img_features = torch.autograd.Variable(torch.randn(10, 512))
     sentence, image_features = multimodal(words_emb, img_features)
-    print 'output of multimodal', sentence.shape
+    print('output of multimodal', sentence.shape)
 
     cnn = CNNTextModule(config)
     input = torch.autograd.Variable(torch.randn(10, 56, 300))
     output = cnn(input)
-    print 'output of cnn'
-    print output.size()
+    print('output of cnn')
+    print(output.size())

@@ -7,8 +7,6 @@
 *.pt
 *.mat
 
-# some json
-*.json
 
 # big txt
 *_corpus.txt

@@ -1,7 +1,6 @@
 #coding=utf-8
 
 from torch.autograd import Variable
-from linecache_light import LineCache
 from configure import GlobalVariable
 from PIL import Image
 
@@ -11,7 +10,7 @@ import urllib
 
 gvar = GlobalVariable()
 gvar.resnet = gvar.resnet.cuda()
-data_pair = LineCache('static/dataset/data_pair.json')
+data_pair = [json.loads(line.strip()) for line in open('static/dataset/data_pair.json')]
 query_num = 10
 
 
@@ -19,8 +18,15 @@ def handle_sentence(query_sen):
     dists = np.square(gvar.sentences - query_sen).sum(1)
     index = dists.argsort()
     dists = dists[index]
-    topk = [json.loads(data) for data in data_pair[index[0:query_num]]]
+    topk = [data_pair[index[i]] for i in range(query_num)]
+    print(topk)
+    images = ['static/dataset/'+topk[i]['imgpath'] for i in range(query_num)]
+    for i in range(query_num):
+        for key in topk[i]:
+            topk[i][key] = str(topk[i][key])
+    return topk, images
 
+    '''
     # get images
     result_images = []
     for i in range(len(topk)):
@@ -38,14 +44,22 @@ def handle_sentence(query_sen):
                 t[k] = str(t[k])
 
     return topk, result_images
+    '''
 
 
 def handle_image(query_img):
     dists = np.square(gvar.arch_feats - query_img).sum(1)
     index = dists.argsort()
     dists = dists[index]
-    temp_sentence_ids = gvar.sentence_ids[index]
-    topk = [json.loads(data) for data in data_pair[temp_sentence_ids[0:query_num]]]
+    topk = [data_pair[index[i]] for i in range(query_num)]
+    images = ['static/dataset/'+topk[i]['imgpath'] for i in range(query_num)]
+    for i in range(query_num):
+        for key in topk[i]:
+            topk[i][key] = str(topk[i][key])
+    return topk, images
+    '''
+    #temp_sentence_ids = gvar.sentence_ids[index]
+    #topk = [data for data in data_pair[temp_sentence_ids[0:query_num]]]
 
     result_images = []
     for i in range(len(topk)):
@@ -66,6 +80,8 @@ def handle_image(query_img):
             if type(t[k]) == int:
                 t[k] = str(t[k])
     return topk, result_images
+    '''
+
 
 def query_from_sentence(query_sen):
     sentence_emb = gvar.sentence_transform(query_sen).mean(0)
@@ -83,8 +99,8 @@ def query_from_image(query_image):
 if __name__  == '__main__':
     query_sen = u"亭子"
     for sentence in query_from_sentence(query_sen):
-        print sentence
+        print(sentence)
 
     image = Image.open('tingzi.jpg').convert('RGB')
     for image in query_from_image(image):
-        print image
+        print(image)

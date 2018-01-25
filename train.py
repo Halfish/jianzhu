@@ -11,7 +11,7 @@ agent = Agent(address='127.0.0.1', port=5001)
 from zutil.config import Config
 config = Config(source='parameters.json')
 
-print 'building model'
+print('building model')
 assert config.model_type in {'rnn', 'cnn', 'simple', 'attention'}
 if config.model_type == 'attention':
     model = AttentionModule(config)
@@ -20,12 +20,16 @@ else:
     model = MultimodalModule(config)
     criterion = torch.nn.CosineEmbeddingLoss()
 
+print(model)
+print(criterion)
+
 if config.cuda:
     model = model.cuda()
     criterion = criterion.cuda()
 
 params = model.parameters()
-#optimizer = torch.optim.Adam(params, lr=config.learning_rate, weight_decay=config.weight_decay)
+#optimizer = torch.optim.Adam(
+#    params, lr=config.learning_rate, weight_decay=config.weight_decay)
 optimizer = torch.optim.Adam(params, lr=config.learning_rate)
 
 def dist(x1, x2, p=2):
@@ -42,7 +46,7 @@ def constractive_loss(bag_semantic, bag_visual, margin=1):
         v, x_neg = bag_visual[0], bag_semantic[i+1]
         loss += torch.nn.ReLU()(dist(x, v) - dist(x, v_neg) + margin).mean()
         loss += torch.nn.ReLU()(dist(x, v) - dist(x_neg, v) + margin).mean()
-    loss = loss  / (len(bag_semantic) - 1)
+    loss = loss / (len(bag_semantic) - 1)
     return loss
 
 def calc_norm(weights, ptype='weight'):
@@ -69,19 +73,20 @@ def train(epoch, dataset):
         loss.backward()
         weight_norm = calc_norm(model.parameters(), ptype='weight')
         grad_norm = calc_norm(model.parameters(), ptype='grad')
-        print '\ttotal weight norm = %.5f, total grad norm = %.5f' %(weight_norm, grad_norm)
+        print('\ttotal weight norm = %.5f, total grad norm = %.5f' 
+                %(weight_norm, grad_norm))
         if config.model_type in {'rnn', 'attention'}:
             rnn_weight_norm = calc_norm(model.rnn.parameters(), ptype='weight')
             rnn_grad_norm_before = calc_norm(model.rnn.parameters(), ptype='grad')
             torch.nn.utils.clip_grad_norm(model.rnn.parameters(), config.max_clip_norm)
             rnn_grad_norm_after = calc_norm(model.rnn.parameters(), ptype='grad')
-            print '\trnn weight norm = %.5f, rnn norm before = %.5f, after = %.5f' % (
-                rnn_weight_norm, rnn_grad_norm_before, rnn_grad_norm_after)
+            print('\trnn weight norm = %.5f, rnn norm before = %.5f, after = %.5f' 
+                    % (rnn_weight_norm, rnn_grad_norm_before, rnn_grad_norm_after))
         optimizer.step()
         loss = loss.data.mean()
         epoch_train_loss.append(loss)
         batchid += 1
-        print 'epoch = %d, batch id = %d, train loss = %.3f' % (epoch, batchid, loss)
+        print('epoch = %d, batch id = %d, train loss = %.3f' % (epoch, batchid, loss))
         if batchid > 100:
             break
     epoch_train_loss = np.array(epoch_train_loss).mean()
@@ -102,7 +107,7 @@ def validation(epoch, dataset):
         loss = loss.data.mean()
         epoch_val_loss.append(loss)
         batchid += 1
-        print 'epoch = %d, batch id = %d, evaluation loss = %.3f' % (epoch, batchid, loss)
+        print('epoch = %d, batch id = %d, evaluation loss = %.3f' % (epoch, batchid, loss))
         if batchid > 30:
             break
     epoch_val_loss = np.array(epoch_val_loss).mean()
@@ -135,7 +140,7 @@ def epoch_loop():
         checkpoints.valid_loss.append(val_loss)
 
         if (epoch+1) % config.savefreq == 0:
-            print 'saving model'
+            print('saving model')
             #checkpoints.update(model = model)
             checkpoints.update(end_time = time.asctime())
             torch.save(model, config.checkpoint)

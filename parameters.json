@@ -1,0 +1,34 @@
+{
+	"which_text": "title", # 'title' or 'detail'
+	"neg_sample_num": 3,
+	"model_type": "rnn",	# 'cnn', 'simple', 'rnn' or 'attention'
+	"word_emb_dim": 300,
+	"mode": "detail",	# 'image', 'title', 'detail', 'keywords'
+	"root_dir": "./static/dataset/",
+	"filename": "data_pair.json",	# dataset filename
+	"split_rate": 0.9,	# split rate for train and valid dataset
+
+	# model parameters
+	"lstm_hidden_size": 128,
+	"recurrent_layers": 3,
+
+	"resnet_fmap_size": 64,		# for attention model
+	"mlp_dropout": 0.5,
+	"mlp_hidden_size": 100,
+
+	"sentence_emb_dim": 100,	# for cnn encoder
+	"resnet_features": 512,
+	"kernel_nums": [3,3,3,3],
+	"kernel_sizes": 3,
+
+	# training parameters
+	"cuda": true,
+	"batch_size": 100,
+	"weight_decay": 0.1,
+	"max_clip_norm": 1.0,
+	"max_epoch": 10,
+	"savefreq": 10,
+	"learning_rate": 0.001,
+
+	"": "nothing"
+}

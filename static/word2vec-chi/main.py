@@ -13,17 +13,17 @@ class MySentences(object):
 
     def __iter__(self):
         for document in open(self.corpusFilename, 'r'):
-            words = list(jieba.cut(document[9:-11], cut_all=False))
+            words = list(jieba.cut(document, cut_all=False))
             yield words
 
 
 def trainW2V():
-    print 'start to train word2vec'
-    sentences = MySentences('full_corpus.txt')
+    print('start to train word2vec')
+    sentences = MySentences('fullcorpus.txt')
     model = word2vec.Word2Vec(sentences, size=300, window=5, min_count=20, workers=10)
     model.init_sims(replace=True)
-    print 'done training word2vec'
-    print model
+    print('done training word2vec')
+    print(model)
 
     model.save('word2vec_news.model')
 
